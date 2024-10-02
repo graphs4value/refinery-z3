@@ -49,7 +49,6 @@ val z3: Provider<Configuration> by configurations.registering {
 	isCanBeResolved = true
 }
 
-
 open class MavenArtifactExtension {
 	var nameSuffix: String? = null
 }
