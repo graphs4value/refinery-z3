@@ -1,5 +1,5 @@
 <!--
-  SPDX-FileCopyrightText: 2024 The Refinery Authors <https://refinery.tools/>
+  SPDX-FileCopyrightText: 2026 The Refinery Authors <https://refinery.tools/>
 
   SPDX-License-Identifier: Apache-2.0
 -->
@@ -12,21 +12,17 @@ The repository contains Java bindings for
 [Z3](https://microsoft.github.io/z3guide/) for use in the
 [Refinery](https://refinery.tools) project.
 
-Some code in this repository has been adapter from
+Some code in this repository has been adapted from
 [Google OR-TOOLS](https://developers.google.com/optimization/), which is
 available under
 [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt).
 
 The artifacts produced in the repository repackage upstream Z3 releases as
-Maven modules. As an exception, we build binaries for _Linux aarch64_ and
-_Linux x84-64_, because Z3 does not offer `glibc 2.34` compatible binaries.
-Refinery uses [Amazon Linux 2023 Minimal](https://docs.aws.amazon.
-com/linux/al2023/ug/core-glibc.html) for its container images, which only
-supports `glibc 2.34`, but not `glibc 2.35` as required by upstream Z3 binaries.
+Maven modules.
 
 ## License
 
-Copyright (c) 2023-2024 [The Refinery Authors](https://github.com/graphs4value/refinery/blob/main/CONTRIBUTORS.md)
+Copyright (c) 2023-2026 [The Refinery Authors](https://github.com/graphs4value/refinery/blob/main/CONTRIBUTORS.md)
 
 Z3 is available under the [MIT License](https://raw.githubusercontent.com/Z3Prover/z3/master/LICENSE.txt).
 

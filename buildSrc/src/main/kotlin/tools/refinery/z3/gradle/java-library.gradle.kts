@@ -16,7 +16,7 @@ java {
 	withSourcesJar()
 
 	toolchain {
-		languageVersion.set(JavaLanguageVersion.of(21))
+		languageVersion.set(JavaLanguageVersion.of(25))
 	}
 }
 
@@ -137,9 +137,9 @@ publishing {
 }
 
 signing {
-	setRequired({
+	setRequired {
 		!version.toString().endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish")
-	})
+	}
 	val signingKeyId = System.getenv("PGP_KEY_ID")
 	val signingKey = System.getenv("PGP_KEY")
 	val signingPassword = System.getenv("PGP_PASSWORD")

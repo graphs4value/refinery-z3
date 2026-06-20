@@ -10,7 +10,7 @@ plugins {
 	id("tools.refinery.z3.gradle.java-library")
 }
 
-val classifier = "z3-${version}-x64-glibc-2.35"
+val classifier = "z3-${version}-x64-glibc-2.39"
 val extractedClassesDir = layout.buildDirectory.dir("z3-extracted")
 val extractedSourcesDir = layout.buildDirectory.dir("z3-sources")
 
@@ -64,6 +64,7 @@ tasks.jar {
 
 tasks.test {
 	useJUnitPlatform()
+	jvmArgs("--enable-native-access=ALL-UNNAMED")
 }
 
 tasks.named<Jar>("sourcesJar") {

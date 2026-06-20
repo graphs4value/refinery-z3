@@ -8,7 +8,7 @@ plugins {
 	id("tools.refinery.z3.gradle.java-library")
 }
 
-val classifier = "z3-${version}-arm64-osx-11.0"
+val classifier = "z3-${version}-arm64-osx-15.7.3"
 val library = "z3java-darwin-aarch64"
 
 mavenArtifact.nameSuffix = "Darwin aarch64"
