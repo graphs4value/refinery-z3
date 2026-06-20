@@ -86,7 +86,6 @@ dependencies {
 	api(files(extractZ3Jar))
 	implementation(libs.jna)
 	implementation(project(":refinery-z3-solver-darwin-aarch64"))
-	implementation(project(":refinery-z3-solver-darwin-x86-64"))
 	implementation(project(":refinery-z3-solver-linux-aarch64"))
 	implementation(project(":refinery-z3-solver-linux-x86-64"))
 	implementation(project(":refinery-z3-solver-win32-x86-64"))
