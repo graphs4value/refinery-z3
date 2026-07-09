@@ -1,5 +1,5 @@
 /*
- * SPDX-FileCopyrightText: 2023-2024 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2023-2026 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -138,7 +138,8 @@ publishing {
 
 signing {
 	setRequired {
-		!version.toString().endsWith("SNAPSHOT") && gradle.taskGraph.hasTask("publish")
+		!version.toString().endsWith("SNAPSHOT") &&
+				(project.hasProperty("forceSign") || gradle.taskGraph.hasTask("publish"))
 	}
 	val signingKeyId = System.getenv("PGP_KEY_ID")
 	val signingKey = System.getenv("PGP_KEY")

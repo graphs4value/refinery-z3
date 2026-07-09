@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: 2024 The Refinery Authors
+# SPDX-FileCopyrightText: 2024-2026 The Refinery Authors
 #
 # SPDX-License-Identifier: Apache-2.0
 
@@ -10,16 +10,25 @@ on:
       - '!gh-pages'
   pull_request:
     types: [opened, synchronize, reopened]
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+env:
+  RUNNER_UBUNTU: &runner-ubuntu ubuntu-26.04
+  RUNNER_UBUNTU_ARM: &runner-ubuntu-arm ubuntu-26.04-arm
+  RUNNER_WINDOWS: &runner-windows windows-2025
+  RUNNER_MACOS: &runner-macos macos-26
 jobs:
   build:
     name: Build
     strategy:
+      fail-fast: false
       matrix:
         os:
-          - ubuntu-26.04
-          - ubuntu-26.04-arm
-          - windows-2025
-          - macos-26
+          - *runner-ubuntu
+          - *runner-ubuntu-arm
+          - *runner-windows
+          - *runner-macos
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout code
@@ -34,14 +43,32 @@ jobs:
         with:
           path: |
             ~/.gradle/caches
-          key: ${{ matrix.os }}-gradle-${{ hashFiles('**/*.gradle', 'gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
+          key: ${{ matrix.os }}-gradle-${{ hashFiles('**/*.gradle.kts', 'gradle.properties', 'gradle/libs.versions.toml', 'gradle/wrapper/gradle-wrapper.properties') }}
           restore-keys: ${{ matrix.os }}-gradle
       - name: Gradle build
         run: |
           ./gradlew build -Pci --info --stacktrace --max-workers 4 --no-daemon
+      - name: Build signed Maven repository
+        if: ${{ matrix.os == env.RUNNER_UBUNTU && github.event_name == 'push' && github.repository_owner == 'graphs4value' }}
+        env:
+          PGP_KEY: ${{ secrets.PGP_KEY }}
+          PGP_KEY_ID: ${{ secrets.PGP_KEY_ID }}
+          PGP_PASSWORD: ${{ secrets.PGP_PASSWORD }}
+        run: |
+          ./gradlew mavenRepository -Pci -PforceSign --info --stacktrace --max-workers 4 --no-daemon
+      - name: Build unsigned Maven repository
+        if: ${{ matrix.os == env.RUNNER_UBUNTU && (github.event_name != 'push' || github.repository_owner != 'graphs4value') }}
+        run: |
+          ./gradlew mavenRepository -Pci --info --stacktrace --max-workers 4 --no-daemon
+      - name: Upload artifacts
+        if: ${{ matrix.os == env.RUNNER_UBUNTU }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: maven-repo
+          path: build/repo
   reuse-check:
     name: REUSE Compliance Check
-    runs-on: ubuntu-latest
+    runs-on: *runner-ubuntu
     steps:
     - uses: actions/checkout@v6
     - name: REUSE Compliance Check
