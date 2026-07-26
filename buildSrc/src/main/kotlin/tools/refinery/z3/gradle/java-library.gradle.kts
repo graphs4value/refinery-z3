@@ -59,7 +59,8 @@ tasks {
 		manifest {
 			attributes(
 				"Bundle-SymbolicName" to "${project.group}.${project.name}",
-				"Bundle-Version" to project.version
+				"Bundle-Version" to project.version,
+				"Bundle-License" to "Apache-2.0 AND MIT",
 			)
 		}
 	}
@@ -92,14 +93,20 @@ publishing {
 					"$it for Refinery, an efficient graph solver for generating well-formed models"
 				}
 				url = "https://refinery.tools/"
+				// Maven assumes that a consumer may pick any one of the licenses listed here, so we have to spell
+				// out in the comments that this artifact combines works under both of them.
 				licenses {
 					license {
 						name = "The Apache License, Version 2.0"
 						url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+						comments = "Applies to the Refinery-authored parts of this artifact, including its " +
+								"packaging. Both licenses apply; this is not a choice of license."
 					}
 					license {
 						name = "MIT License"
 						url = "https://raw.githubusercontent.com/Z3Prover/z3/master/LICENSE.txt"
+						comments = "Applies to the bundled Z3 code and native libraries. Both licenses apply; " +
+								"this is not a choice of license."
 					}
 				}
 				developers {
