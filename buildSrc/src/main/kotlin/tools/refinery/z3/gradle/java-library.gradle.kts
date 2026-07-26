@@ -49,15 +49,7 @@ val z3 = configurations.register("z3") {
 	isCanBeResolved = true
 }
 
-open class RefineryZ3Extension {
-	lateinit var z3Version: String
-		internal set
-
-	var nameSuffix: String? = null
-}
-
 val refinery = extensions.create("refinery", RefineryZ3Extension::class)
-refinery.z3Version = version.toString().split("-")[0]
 
 tasks {
 	jar {
@@ -90,11 +82,8 @@ publishing {
 		register<MavenPublication>("mavenJava") {
 			from(components["java"])
 			pom {
-				val nameString = provider {
-					val prefix = "Z3 Java Bindings"
-					val nameSuffix = refinery.nameSuffix
-					if (nameSuffix == null) prefix else "$prefix ($nameSuffix)"
-				}
+				val prefix = "Z3 Java Bindings"
+				val nameString = refinery.nameSuffix.map { "$prefix ($it)" }.orElse(prefix)
 				name = nameString.map { "Refinery $it" }
 				description = nameString.map {
 					"$it for Refinery, an efficient graph solver for generating well-formed models"

@@ -1,6 +1,6 @@
 /*
  * Copyright 2010-2022 Google LLC
- * Copyright 2023 The Refinery Authors <https://refinery.tools/>
+ * Copyright 2023-2026 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,6 +35,11 @@ public final class Z3SolverLoader {
 			return;
 		}
 		try {
+			// The JNI library has the same SONAME as the solver library, so the dynamic linker would consider the
+			// dependency of the former on the latter to be satisfied by the former itself. We therefore have to
+			// load the libraries in reverse dependency order here as well, or else the first call into Z3 would
+			// fail with an unresolved symbol.
+			System.loadLibrary(getOsSpecificLibraryName(SOLVER_LIBRARY_NAME));
 			System.loadLibrary(getOsSpecificLibraryName(JNI_LIBRARY_NAME));
 			loaded = true;
 			return;
