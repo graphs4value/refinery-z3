@@ -10,16 +10,16 @@ plugins {
 	id("tools.refinery.z3.gradle.java-library")
 }
 
-val classifier = "z3-${version}-x64-glibc-2.39"
+val classifier = "z3-${refinery.z3Version}-x64-glibc-2.39"
 val extractedClassesDir = layout.buildDirectory.dir("z3-extracted")
 val extractedSourcesDir = layout.buildDirectory.dir("z3-sources")
 
-val z3Source: Configuration by configurations.creating {
+val z3Source = configurations.create("z3Source") {
 	isCanBeConsumed = false
 	isCanBeResolved = true
 }
 
-val extractZ3Jar by tasks.registering(Sync::class) {
+val extractZ3Jar = tasks.register<Sync>("extractZ3Jar") {
 	dependsOn(configurations.z3)
 	from({
 		val zipFile = configurations.z3.map { it.singleFile }
@@ -39,14 +39,15 @@ val extractZ3Jar by tasks.registering(Sync::class) {
 		val nativeClassFile = extractedClassesDir.get().file("com/microsoft/z3/Native.class").asFile
 		ClassFilePatcher.removeClassInitializer(nativeClassFile)
 	}
+	description = "Extract Z3 Java classes"
 }
 
-val extractZ3Source by tasks.registering(Sync::class) {
+val extractZ3Source = tasks.register<Sync>("extractZ3Source") {
 	dependsOn(z3Source)
 	from({
 		val zipFile = z3Source.singleFile
 		zipTree(zipFile).matching {
-			include("z3-z3-${version}/src/api/java/**/*")
+			include("z3-z3-${refinery.z3Version}/src/api/java/**/*")
 			includeEmptyDirs = false
 		}
 	})
@@ -55,6 +56,7 @@ val extractZ3Source by tasks.registering(Sync::class) {
 		relativePath = RelativePath(true, "com", "microsoft", "z3", *pathInBin)
 	}
 	into(extractedSourcesDir)
+	description = "Extract Z3 Java sources"
 }
 
 tasks.jar {
@@ -80,12 +82,13 @@ tasks.named<Javadoc>("javadoc") {
 }
 
 dependencies {
-	z3("Z3Prover:z3:${version}:${classifier}@zip")
-	z3Source("Z3Prover:z3:${version}@zip")
+	z3("Z3Prover:z3:${refinery.z3Version}:${classifier}@zip")
+	z3Source("Z3Prover:z3:${refinery.z3Version}@zip")
 	// This dependency doesn't get added to Maven metadata, so we have to add the class files to our jar manually.
 	api(files(extractZ3Jar))
 	implementation(libs.jna)
 	implementation(project(":refinery-z3-solver-darwin-aarch64"))
+	implementation(project(":refinery-z3-solver-darwin-x86-64"))
 	implementation(project(":refinery-z3-solver-linux-aarch64"))
 	implementation(project(":refinery-z3-solver-linux-x86-64"))
 	implementation(project(":refinery-z3-solver-win32-x86-64"))

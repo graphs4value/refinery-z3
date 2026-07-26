@@ -10,12 +10,14 @@ plugins {
 
 val mavenRepositoryDir = layout.buildDirectory.map { it.dir("repo") }
 
-val cleanMavenRepository by tasks.registering(Delete::class) {
+val cleanMavenRepository = tasks.register<Delete>("cleanMavenRepository") {
 	delete(mavenRepositoryDir)
+	description = "Clean Maven repository output files"
 }
 
-val mavenRepository by tasks.registering(Task::class) {
+val mavenRepository = tasks.register<Task>("mavenRepository") {
 	dependsOn(cleanMavenRepository)
+	description = "Build Maven repository output"
 }
 
 gradle.projectsEvaluated {

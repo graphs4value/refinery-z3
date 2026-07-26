@@ -1,5 +1,8 @@
+import org.gradle.api.file.RelativePath
+import org.gradle.api.tasks.Sync
+
 /*
- * SPDX-FileCopyrightText: 2021-2023 The Refinery Authors <https://refinery.tools/>
+ * SPDX-FileCopyrightText: 2023-2024 The Refinery Authors <https://refinery.tools/>
  *
  * SPDX-License-Identifier: Apache-2.0
  */
@@ -8,10 +11,10 @@ plugins {
 	id("tools.refinery.z3.gradle.java-library")
 }
 
-val classifier = "z3-${refinery.z3Version}-x64-win"
-val library = "z3java-win32-x86-64"
+val classifier = "z3-${refinery.z3Version}-x64-osx-13.3"
+val library = "z3java-darwin-x86-64"
 
-refinery.nameSuffix = "Win32 x86_64"
+refinery.nameSuffix = "Darwin x86_64"
 
 dependencies {
 	z3("Z3Prover:z3:${refinery.z3Version}:${classifier}@zip")
@@ -22,9 +25,7 @@ val extractZ3Libs = tasks.register<Sync>("extractZ3Libs") {
 	from({
 		val zipFile = configurations.z3.map { it.singleFile }
 		zipTree(zipFile).matching {
-			include("${classifier}/bin/*.dll")
-			// Do not include .NET assembly.
-			exclude("${classifier}/bin/Microsoft.Z3.dll")
+			include("${classifier}/bin/*.dylib")
 			includeEmptyDirs = false
 		}
 	})

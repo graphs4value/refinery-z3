@@ -44,16 +44,20 @@ repositories {
 	}
 }
 
-val z3: Provider<Configuration> by configurations.registering {
+val z3 = configurations.register("z3") {
 	isCanBeConsumed = false
 	isCanBeResolved = true
 }
 
-open class MavenArtifactExtension {
+open class RefineryZ3Extension {
+	lateinit var z3Version: String
+		internal set
+
 	var nameSuffix: String? = null
 }
 
-val artifactExtension = project.extensions.create<MavenArtifactExtension>("mavenArtifact")
+val refinery = extensions.create("refinery", RefineryZ3Extension::class)
+refinery.z3Version = version.toString().split("-")[0]
 
 tasks {
 	jar {
@@ -88,7 +92,7 @@ publishing {
 			pom {
 				val nameString = provider {
 					val prefix = "Z3 Java Bindings"
-					val nameSuffix = artifactExtension.nameSuffix
+					val nameSuffix = refinery.nameSuffix
 					if (nameSuffix == null) prefix else "$prefix ($nameSuffix)"
 				}
 				name = nameString.map { "Refinery $it" }
@@ -98,12 +102,12 @@ publishing {
 				url = "https://refinery.tools/"
 				licenses {
 					license {
-						name = "MIT License"
-						url = "https://raw.githubusercontent.com/Z3Prover/z3/master/LICENSE.txt"
-					}
-					license {
 						name = "The Apache License, Version 2.0"
 						url = "http://www.apache.org/licenses/LICENSE-2.0.txt"
+					}
+					license {
+						name = "MIT License"
+						url = "https://raw.githubusercontent.com/Z3Prover/z3/master/LICENSE.txt"
 					}
 				}
 				developers {
