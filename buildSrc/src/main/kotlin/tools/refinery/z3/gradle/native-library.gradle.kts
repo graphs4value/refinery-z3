@@ -54,6 +54,14 @@ tasks.processResources {
 	}
 }
 
+// Expose the Z3 distribution archive itself, so that other projects can pick platform-independent parts out of it
+// (such as the Java bindings jar) without having to repeat the classifier.
+configurations.create("z3Archive") {
+	isCanBeConsumed = true
+	isCanBeResolved = false
+	outgoing.artifact(configurations.named("z3").map { it.singleFile })
+}
+
 // Expose the extracted native libraries to :refinery-z3-solver, which puts their directory on the dynamic linker
 // search path to test loading them without extracting them from the jars on the classpath.
 configurations.create("nativeLibraries") {

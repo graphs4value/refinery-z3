@@ -10,7 +10,6 @@ plugins {
 	id("tools.refinery.z3.gradle.java-library")
 }
 
-val classifier = "z3-${refinery.z3Version}-x64-glibc-2.39"
 val extractedJarDir = layout.buildDirectory.dir("z3-jar")
 val extractedClassesDir = layout.buildDirectory.dir("z3-extracted")
 val extractedSourcesDir = layout.buildDirectory.dir("z3-sources")
@@ -32,6 +31,10 @@ val z3Source = configurations.create("z3Source") {
 	isCanBeResolved = true
 }
 
+// The Java bindings jar is the same in every Z3 distribution, so we take it from a fixed platform instead of
+// downloading (and having to name) another archive of our own.
+val javaBindingsProject = nativeLibraryProjects.getValue("linux-x86-64")
+
 // Directory of already extracted native libraries for the platform running the build.
 val hostNativeLibraries = configurations.create("hostNativeLibraries") {
 	isCanBeConsumed = false
@@ -48,7 +51,7 @@ val extractZ3DistributionJar = tasks.register<Sync>("extractZ3DistributionJar") 
 	from({
 		val zipFile = configurations.z3.map { it.singleFile }
 		zipTree(zipFile).matching {
-			include("${classifier}/bin/com.microsoft.z3.jar")
+			include("*/bin/com.microsoft.z3.jar")
 		}
 	})
 	eachFile {
@@ -203,7 +206,7 @@ tasks.named<Javadoc>("javadoc") {
 }
 
 dependencies {
-	z3("Z3Prover:z3:${refinery.z3Version}:${classifier}@zip")
+	z3(project(path = javaBindingsProject, configuration = "z3Archive"))
 	z3Source("Z3Prover:z3:${refinery.z3Version}@zip")
 	// This dependency doesn't get added to Maven metadata, so we have to add the class files to our jar manually.
 	api(files(extractZ3Jar))
