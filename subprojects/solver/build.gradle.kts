@@ -11,6 +11,7 @@ plugins {
 }
 
 val classifier = "z3-${refinery.z3Version}-x64-glibc-2.39"
+val extractedJarDir = layout.buildDirectory.dir("z3-jar")
 val extractedClassesDir = layout.buildDirectory.dir("z3-extracted")
 val extractedSourcesDir = layout.buildDirectory.dir("z3-sources")
 
@@ -38,24 +39,40 @@ val hostNativeLibraries = configurations.create("hostNativeLibraries") {
 }
 val hostNativeLibrariesDir = files(hostNativeLibraries)
 
-val extractZ3Jar = tasks.register<Sync>("extractZ3Jar") {
+// Unpack the Java bindings jar from the Z3 distribution on its own. Reading it out of the distribution and
+// extracting its contents in a single task would require expanding the distribution while the build is configured,
+// which breaks {@code clean build}: the expanded files live in the build directory and are deleted before the
+// extraction gets to run.
+val extractZ3DistributionJar = tasks.register<Sync>("extractZ3DistributionJar") {
 	dependsOn(configurations.z3)
 	from({
 		val zipFile = configurations.z3.map { it.singleFile }
-		val jarFile = zipTree(zipFile).matching {
+		zipTree(zipFile).matching {
 			include("${classifier}/bin/com.microsoft.z3.jar")
-		}.singleFile
-		zipTree(jarFile).matching {
-			exclude("META-INF/MANIFEST.MF")
-			includeEmptyDirs = false
 		}
 	})
+	eachFile {
+		relativePath = RelativePath(true, relativePath.lastName)
+	}
+	includeEmptyDirs = false
+	into(extractedJarDir)
+	description = "Extract the Z3 Java bindings jar"
+}
+
+val extractZ3Jar = tasks.register<Sync>("extractZ3Jar") {
+	dependsOn(extractZ3DistributionJar)
+	from(zipTree(extractedJarDir.map { it.file("com.microsoft.z3.jar") }).matching {
+		exclude("META-INF/MANIFEST.MF")
+	})
+	includeEmptyDirs = false
 	into(extractedClassesDir)
+	// Capture the directory in a local, so that the action below doesn't have to reference the build script.
+	val classesDir = extractedClassesDir
 	doLast {
 		// The class initializer off {@see com.microsoft.z3.Native} will try to load the Z3 native libraries
 		// from the system default library path unless the {@code z3.skipLibraryLoad} system property is set.
 		// Since we don't control the library path or system properties, we remove the class initializer entirely.
-		val nativeClassFile = extractedClassesDir.get().file("com/microsoft/z3/Native.class").asFile
+		val nativeClassFile = classesDir.get().file("com/microsoft/z3/Native.class").asFile
 		ClassFilePatcher.removeClassInitializer(nativeClassFile)
 	}
 	description = "Extract Z3 Java classes"
@@ -90,17 +107,21 @@ tasks.withType<Test>().configureEach {
 
 // Everything the tests need, except the jars containing the native libraries, so that
 // {@see tools.refinery.z3.Z3SolverLoader} can't extract them.
-val classpathWithoutNativeLibraries = files(
-	sourceSets.main.map { it.output },
-	configurations.testRuntimeClasspath.map { testRuntimeClasspath ->
-		testRuntimeClasspath.incoming.artifactView {
-			componentFilter { component ->
-				component !is ProjectComponentIdentifier ||
-						component.projectPath !in nativeLibraryProjects.values
-			}
-		}.files
-	},
-)
+val classpathWithoutNativeLibraries = run {
+	// Rebind as a local, so that the filter below captures only this set instead of the whole build script.
+	val nativeLibraryProjectPaths = nativeLibraryProjects.values.toSet()
+	files(
+		sourceSets.main.map { it.output },
+		configurations.testRuntimeClasspath.map { testRuntimeClasspath ->
+			testRuntimeClasspath.incoming.artifactView {
+				componentFilter { component ->
+					component !is ProjectComponentIdentifier ||
+							component.projectPath !in nativeLibraryProjectPaths
+				}
+			}.files
+		},
+	)
+}
 
 // Tests that must run without any of the platform-specific jars on the classpath.
 val testMissingLibrariesSourceSet = sourceSets.create("testMissingLibraries") {
@@ -124,12 +145,15 @@ val testExtractedLibraries = tasks.register<Test>("testExtractedLibraries") {
 		.withPropertyName("hostNativeLibraries")
 		.withPathSensitivity(PathSensitivity.RELATIVE)
 
+	val hasHostNativeLibraries = hostNativeLibraryProject != null
 	onlyIf("Z3 native libraries are available for the platform running the build") {
-		hostNativeLibraryProject != null
+		hasHostNativeLibraries
 	}
 
+	// Capture the file collection in a local, so that the action below doesn't have to reference the build script.
+	val librariesDir = hostNativeLibrariesDir
 	doFirst {
-		val librariesPath = hostNativeLibrariesDir.asPath
+		val librariesPath = librariesDir.asPath
 		// Lets {@code System.loadLibrary} find the JNI library.
 		systemProperty("java.library.path", librariesPath)
 		// Lets the dynamic linker find the Z3 solver library the JNI library links against.

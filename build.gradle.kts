@@ -8,28 +8,19 @@ plugins {
 	alias(libs.plugins.versions)
 }
 
-val mavenRepositoryDir = layout.buildDirectory.map { it.dir("repo") }
-
-val cleanMavenRepository = tasks.register<Delete>("cleanMavenRepository") {
-	delete(mavenRepositoryDir)
-	description = "Clean Maven repository output files"
+val mavenRepositoryContents = configurations.create("mavenRepositoryContents") {
+	isCanBeConsumed = false
+	isCanBeResolved = true
 }
 
-val mavenRepository = tasks.register<Task>("mavenRepository") {
-	dependsOn(cleanMavenRepository)
-	description = "Build Maven repository output"
-}
-
-gradle.projectsEvaluated {
-	mavenRepository.configure {
-		for (subproject in rootProject.subprojects) {
-			if (subproject.plugins.hasPlugin(MavenPublishPlugin::class)) {
-				val publishTask = subproject.tasks.named("publishMavenJavaPublicationToFileRepository")
-				publishTask.configure {
-					mustRunAfter(cleanMavenRepository)
-				}
-				dependsOn(publishTask)
-			}
-		}
+dependencies {
+	for (subprojectPath in subprojects.map { it.path }) {
+		mavenRepositoryContents(project(path = subprojectPath, configuration = "mavenRepositoryElements"))
 	}
+}
+
+tasks.register<Sync>("mavenRepository") {
+	from(mavenRepositoryContents)
+	into(layout.buildDirectory.dir("repo"))
+	description = "Build Maven repository output"
 }

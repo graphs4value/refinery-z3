@@ -51,6 +51,9 @@ val z3 = configurations.register("z3") {
 
 val refinery = extensions.create("refinery", RefineryZ3Extension::class)
 
+// Each project publishes into its own build directory, which the root project aggregates.
+val mavenRepositoryDir = layout.buildDirectory.dir("repo")
+
 tasks {
 	jar {
 		manifest {
@@ -124,15 +127,34 @@ publishing {
 	repositories {
 		maven {
 			name = "file"
-			setUrl(rootProject.layout.buildDirectory.map { uri(it.dir("repo")) })
+			setUrl(mavenRepositoryDir.map { uri(it) })
 		}
+	}
+}
+
+val cleanMavenRepository = tasks.register<Delete>("cleanMavenRepository") {
+	delete(mavenRepositoryDir)
+	description = "Clean Maven repository output files"
+}
+
+tasks.named("publishMavenJavaPublicationToFileRepository") {
+	// Publishing only ever adds files, so drop stale ones (e.g., left over from an earlier version) first.
+	dependsOn(cleanMavenRepository)
+}
+
+// Expose the published files, so that the root project can aggregate them into a single Maven repository without
+// having to reach into this project.
+configurations.create("mavenRepositoryElements") {
+	isCanBeConsumed = true
+	isCanBeResolved = false
+	outgoing.artifact(mavenRepositoryDir) {
+		builtBy(tasks.named("publishMavenJavaPublicationToFileRepository"))
 	}
 }
 
 signing {
 	setRequired {
-		!version.toString().endsWith("SNAPSHOT") &&
-				(project.hasProperty("forceSign") || gradle.taskGraph.hasTask("publish"))
+		!version.toString().endsWith("SNAPSHOT") && project.hasProperty("forceSign")
 	}
 	val signingKeyId = System.getenv("PGP_KEY_ID")
 	val signingKey = System.getenv("PGP_KEY")
