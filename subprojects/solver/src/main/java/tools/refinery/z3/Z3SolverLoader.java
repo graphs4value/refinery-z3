@@ -12,6 +12,7 @@
 package tools.refinery.z3;
 
 import com.sun.jna.Platform;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.URI;
@@ -109,7 +110,8 @@ public final class Z3SolverLoader {
 		tempDir.toFile().deleteOnExit();
 		Files.walkFileTree(resourcePath, new SimpleFileVisitor<>() {
 			@Override
-			public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+			public @NotNull FileVisitResult preVisitDirectory(@NotNull Path dir, @NotNull BasicFileAttributes attrs)
+					throws IOException {
 				var result = super.preVisitDirectory(dir, attrs);
 				var targetPath = getTargetPath(dir, resourcePath, tempDir);
 				if (!Files.exists(targetPath)) {
@@ -120,7 +122,8 @@ public final class Z3SolverLoader {
 			}
 
 			@Override
-			public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+			public @NotNull FileVisitResult visitFile(@NotNull Path file, @NotNull BasicFileAttributes attrs)
+					throws IOException {
 				var result = super.visitFile(file, attrs);
 				var targetPath = getTargetPath(file, resourcePath, tempDir);
 				Files.copy(file, targetPath);

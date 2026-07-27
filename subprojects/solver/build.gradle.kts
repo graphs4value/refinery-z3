@@ -221,6 +221,7 @@ dependencies {
 	if (hostNativeLibraryProject != null) {
 		hostNativeLibraries(project(path = hostNativeLibraryProject, configuration = "nativeLibraries"))
 	}
+	compileOnly(libs.jetbrainsAnnotations)
 	testImplementation(libs.junit.api)
 	testRuntimeOnly(libs.junit.engine)
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
