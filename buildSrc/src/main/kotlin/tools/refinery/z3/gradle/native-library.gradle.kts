@@ -10,6 +10,11 @@ plugins {
 }
 
 val refineryExtension = the<RefineryZ3Extension>()
+
+refineryExtension.pedigreeNotes.convention(
+	"The native libraries were extracted unmodified from the official Z3 distribution for this platform and " +
+			"repackaged into this artifact."
+)
 val refineryNativesExtension = extensions.create("refineryNatives", RefineryNativesExtension::class)
 
 // The subproject can only set the classifier after this plugin has been applied, so the dependency notation has to

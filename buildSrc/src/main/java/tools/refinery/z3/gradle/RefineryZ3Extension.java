@@ -23,4 +23,10 @@ public abstract class RefineryZ3Extension {
 	}
 
 	public abstract Property<String> getNameSuffix();
+
+	/**
+	 * Commentary for the {@code pedigree} of the bundled Z3 component in the CycloneDX SBOM, describing how this
+	 * artifact came to contain its copy of Z3.
+	 */
+	public abstract Property<String> getPedigreeNotes();
 }

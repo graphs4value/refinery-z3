@@ -10,6 +10,10 @@ plugins {
 	id("tools.refinery.z3.gradle.java-library")
 }
 
+refinery.pedigreeNotes = "The Java bindings were extracted from the official Z3 distribution and repackaged into " +
+		"this artifact. The class initializer of com.microsoft.z3.Native has been removed, so that loading the " +
+		"native libraries is controlled by tools.refinery.z3.Z3SolverLoader rather than the system library path."
+
 val extractedJarDir = layout.buildDirectory.dir("z3-jar")
 val extractedClassesDir = layout.buildDirectory.dir("z3-extracted")
 val extractedSourcesDir = layout.buildDirectory.dir("z3-sources")

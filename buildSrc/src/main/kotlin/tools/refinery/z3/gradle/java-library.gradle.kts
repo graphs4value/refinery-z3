@@ -81,10 +81,75 @@ tasks {
 	}
 }
 
+// The POM can only say that a consumer may pick one of our licenses, and Z3 is bundled rather than resolved as a
+// dependency, so neither the POM nor a dependency-derived SBOM can state what this artifact actually contains.
+// We deliberately do not set `isExternal` on the bundled component, but we still declare version 1.7,
+// so that consumers can see the field was available to us and we did not claim the component is provided by the
+// environment. See https://github.com/CycloneDX/guides/issues/29#issuecomment-2785784811 for the semantics.
+// The BOM carries no timestamp or serial number, so that it stays byte-for-byte reproducible.
+val cyclonedxBom = tasks.register("cyclonedxBom") {
+	val bomFile = layout.buildDirectory.file("cyclonedx/bom.json")
+	outputs.file(bomFile)
+	val artifactName = project.name
+	val artifactVersion = project.version.toString()
+	val purl = "pkg:maven/${project.group}/$artifactName@$artifactVersion"
+	val z3Purl = "pkg:github/Z3Prover/z3@z3-${refinery.z3Version}"
+	val z3Version = refinery.z3Version
+	// Read when the task runs, because the subproject can only describe its own pedigree after this plugin has
+	// been applied.
+	val pedigreeNotes = refinery.pedigreeNotes
+	doLast {
+		val outputFile = bomFile.get().asFile
+		outputFile.parentFile.mkdirs()
+		outputFile.writeText(
+			"""
+			{
+			  "bomFormat": "CycloneDX",
+			  "specVersion": "1.7",
+			  "version": 1,
+			  "metadata": {
+			    "component": {
+			      "type": "library",
+			      "bom-ref": "$purl",
+			      "name": "$artifactName",
+			      "version": "$artifactVersion",
+			      "purl": "$purl",
+			      "licenses": [{ "expression": "Apache-2.0 AND MIT" }]
+			    }
+			  },
+			  "components": [
+			    {
+			      "type": "library",
+			      "bom-ref": "$z3Purl",
+			      "name": "z3",
+			      "version": "$z3Version",
+			      "publisher": "Microsoft Corporation",
+			      "purl": "$z3Purl",
+			      "licenses": [{ "license": { "id": "MIT" } }],
+			      "pedigree": { "notes": "${pedigreeNotes.get()}" }
+			    }
+			  ],
+			  "dependencies": [
+			    { "ref": "$purl", "dependsOn": ["$z3Purl"] }
+			  ],
+			  "compositions": [
+			    { "aggregate": "incomplete", "dependencies": ["$purl"] }
+			  ]
+			}
+			""".trimIndent()
+		)
+	}
+	description = "Generate a CycloneDX SBOM recording the bundled Z3 and the combined license"
+}
+
 publishing {
 	publications {
 		register<MavenPublication>("mavenJava") {
 			from(components["java"])
+			artifact(cyclonedxBom) {
+				classifier = "cyclonedx"
+				extension = "json"
+			}
 			pom {
 				val prefix = "Z3 Java Bindings"
 				val nameString = refinery.nameSuffix.map { "$prefix ($it)" }.orElse(prefix)
