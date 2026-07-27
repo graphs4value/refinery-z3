@@ -28,5 +28,5 @@ Z3 is available under the [MIT License](https://raw.githubusercontent.com/Z3Prov
 
 Refinery Z3 Java Bindings are available under [The Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0.txt).
 
-Refinery complies with the [REUSE Specification – Version 3.0](https://reuse.software/) to provide copyright and licensing information to each file, including files available under other licenses.
+Refinery complies with the [REUSE Specification – Version 3.3](https://reuse.software/) to provide copyright and licensing information to each file, including files available under other licenses.
 For more information, see the comments headers in each file and the license texts in the [LICENSES](LICENSES/) directory.
