@@ -57,7 +57,15 @@ val mavenRepositoryDir = layout.buildDirectory.dir("repo")
 tasks {
 	jar {
 		manifest {
+			// The architecture has to be spelled with an underscore, because {@code 64} on its own is not a Java
+			// identifier.
+			val moduleName = "${project.group}." + project.name
+				.removePrefix("refinery-z3-")
+				.replace("x86-64", "x86_64")
+				.replace('-', '.')
 			attributes(
+				"Automatic-Module-Name" to moduleName,
+				// Documentation only, we don't set Bundle-ManifestVersion: 2, so these don't get interpreted by OSGi.
 				"Bundle-SymbolicName" to "${project.group}.${project.name}",
 				"Bundle-Version" to project.version,
 				"Bundle-License" to "Apache-2.0 AND MIT",
